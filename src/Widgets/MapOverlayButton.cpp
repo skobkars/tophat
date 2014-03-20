@@ -68,6 +68,41 @@ MapOverlayButton::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
   return true;
 }
 
+MapOverlayButton::Screens::ButtonPosition
+MapOverlayButton::Screens::GetButtonPosition(
+    InfoBoxSettings::Geometry geometry, bool landscape)
+{
+  if (landscape)
+    switch (geometry) {
+    case InfoBoxSettings::Geometry::SPLIT_8:
+    case InfoBoxSettings::Geometry::LEFT_6_RIGHT_3_VARIO:
+    case InfoBoxSettings::Geometry::TOP_8_VARIO:
+    case InfoBoxSettings::Geometry::OBSOLETE_SPLIT_8:
+        return MapOverlayButton::Screens::ButtonPosition::Bottom;
+
+    case InfoBoxSettings::Geometry::BOTTOM_RIGHT_8:
+    case InfoBoxSettings::Geometry::BOTTOM_RIGHT_12:
+    case InfoBoxSettings::Geometry::BOTTOM_RIGHT_4:
+    case InfoBoxSettings::Geometry::BOTTOM_8_VARIO:
+    case InfoBoxSettings::Geometry::RIGHT_5:
+    case InfoBoxSettings::Geometry::RIGHT_24:
+    case InfoBoxSettings::Geometry::RIGHT_9_VARIO:
+    case InfoBoxSettings::Geometry::OBSOLETE_BOTTOM_RIGHT_8:
+    case InfoBoxSettings::Geometry::OBSOLETE_BOTTOM_RIGHT_12:
+    case InfoBoxSettings::Geometry::OBSOLETE_BOTTOM_RIGHT_4:
+      return MapOverlayButton::Screens::ButtonPosition::Left;
+
+    case InfoBoxSettings::Geometry::TOP_LEFT_8:
+    case InfoBoxSettings::Geometry::TOP_LEFT_12:
+    case InfoBoxSettings::Geometry::TOP_LEFT_4:
+    case InfoBoxSettings::Geometry::OBSOLETE_TOP_LEFT_8:
+    case InfoBoxSettings::Geometry::OBSOLETE_TOP_LEFT_4:
+      return MapOverlayButton::Screens::ButtonPosition::Right;
+    }
+
+  return MapOverlayButton::Screens::ButtonPosition::Right;
+}
+
 void
 MapOverlayButton::OnPaint(Canvas &canvas)
 {

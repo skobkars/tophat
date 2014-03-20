@@ -52,7 +52,7 @@ ZoomInButtonWidget::Move(const PixelRect &rc_map)
   PixelRect rc;
 
   switch (s_but->GetButtonPosition()) {
-  case ScreensButtonWidget::ButtonPosition::Bottom:
+  case MapOverlayButton::Screens::ButtonPosition::Bottom:
     // must be landscape mode
     rc.bottom = rc_map.bottom;
     rc.top = rc.bottom - GetHeight();
@@ -68,8 +68,8 @@ ZoomInButtonWidget::Move(const PixelRect &rc_map)
     }
     break;
 
-  case ScreensButtonWidget::ButtonPosition::Left:
-  case ScreensButtonWidget::ButtonPosition::Right:
+  case MapOverlayButton::Screens::ButtonPosition::Left:
+  case MapOverlayButton::Screens::ButtonPosition::Right:
     if (Layout::landscape) {
       rc.left = rc_map.left;
       rc.right = rc.left + GetWidth() + 2;

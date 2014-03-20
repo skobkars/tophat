@@ -25,6 +25,7 @@ Copyright_License {
 #define XCSOAR_SCREENS_BUTTON_WIDGET_HPP
 
 #include "OverlayButtonWidget.hpp"
+#include "MapOverlayButton.hpp"
 #include "Form/Button.hpp"
 #include "Form/ActionListener.hpp"
 #include "Look/ButtonLook.hpp"
@@ -38,17 +39,14 @@ struct PixelRect;
 
 class ScreensButtonWidget : public OverlayButtonWidget {
 public:
-  enum ButtonPosition {
-    Bottom,
-    Left,
-    Right,
-  };
+
 protected:
-  ButtonPosition button_position;
+  MapOverlayButton::Screens::ButtonPosition button_position;
 
 public:
   ScreensButtonWidget()
-    :OverlayButtonWidget(), button_position(Bottom)
+    :OverlayButtonWidget(),
+     button_position(MapOverlayButton::Screens::ButtonPosition::Bottom)
   {}
 
   /**
@@ -73,13 +71,12 @@ public:
    */
   void UpdateText();
 
-
-  ButtonPosition GetButtonPosition() const {
+  /**
+   * return position of S button based on screen layout
+   */
+  MapOverlayButton::Screens::ButtonPosition GetButtonPosition() const {
     return button_position;
   }
-
-  ButtonPosition GetButtonPosition(InfoBoxSettings::Geometry geometry,
-                                   bool landscape);
 };
 
 #endif

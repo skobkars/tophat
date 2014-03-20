@@ -41,41 +41,6 @@ Copyright_License {
 #include "PageActions.hpp"
 #include "UIState.hpp"
 
-ScreensButtonWidget::ButtonPosition
-ScreensButtonWidget::GetButtonPosition(InfoBoxSettings::Geometry geometry,
-                                       bool landscape)
-{
-  if (landscape)
-    switch (geometry) {
-    case InfoBoxSettings::Geometry::SPLIT_8:
-    case InfoBoxSettings::Geometry::LEFT_6_RIGHT_3_VARIO:
-    case InfoBoxSettings::Geometry::TOP_8_VARIO:
-    case InfoBoxSettings::Geometry::OBSOLETE_SPLIT_8:
-        return ScreensButtonWidget::ButtonPosition::Bottom;
-
-    case InfoBoxSettings::Geometry::BOTTOM_RIGHT_8:
-    case InfoBoxSettings::Geometry::BOTTOM_RIGHT_12:
-    case InfoBoxSettings::Geometry::BOTTOM_RIGHT_4:
-    case InfoBoxSettings::Geometry::BOTTOM_8_VARIO:
-    case InfoBoxSettings::Geometry::RIGHT_5:
-    case InfoBoxSettings::Geometry::RIGHT_24:
-    case InfoBoxSettings::Geometry::RIGHT_9_VARIO:
-    case InfoBoxSettings::Geometry::OBSOLETE_BOTTOM_RIGHT_8:
-    case InfoBoxSettings::Geometry::OBSOLETE_BOTTOM_RIGHT_12:
-    case InfoBoxSettings::Geometry::OBSOLETE_BOTTOM_RIGHT_4:
-      return ScreensButtonWidget::ButtonPosition::Left;
-
-    case InfoBoxSettings::Geometry::TOP_LEFT_8:
-    case InfoBoxSettings::Geometry::TOP_LEFT_12:
-    case InfoBoxSettings::Geometry::TOP_LEFT_4:
-    case InfoBoxSettings::Geometry::OBSOLETE_TOP_LEFT_8:
-    case InfoBoxSettings::Geometry::OBSOLETE_TOP_LEFT_4:
-      return ScreensButtonWidget::ButtonPosition::Right;
-    }
-
-  return ScreensButtonWidget::ButtonPosition::Right;
-}
-
 void
 ScreensButtonWidget::UpdateVisibility(const PixelRect &rc,
                                        bool is_panning,
@@ -107,25 +72,25 @@ ScreensButtonWidget::Move(const PixelRect &rc_map)
 
   PixelRect rc;
 
-  button_position = GetButtonPosition(ui_settings.info_boxes.geometry,
-                                      Layout::landscape);
+  button_position = MapOverlayButton::Screens::GetButtonPosition(
+      ui_settings.info_boxes.geometry, Layout::landscape);
 
   switch (button_position) {
-  case ButtonPosition::Left:
+  case  MapOverlayButton::Screens::ButtonPosition::Left:
     rc.left = 0;
     rc.right = rc.left + GetWidth();
     rc.bottom = rc_main.GetCenter().y;
     rc.top = rc.bottom - GetHeight();
   break;
 
-  case ButtonPosition::Right:
+  case  MapOverlayButton::Screens::ButtonPosition::Right:
     rc.right = rc_main.right;
     rc.left = rc.right - GetWidth();
     rc.bottom = rc_main.GetCenter().y;
     rc.top = rc.bottom - GetHeight();
   break;
 
-  case ButtonPosition::Bottom:
+  case  MapOverlayButton::Screens::ButtonPosition::Bottom:
     rc.left = rc_main.GetCenter().x - GetWidth() / 2;
     rc.right = rc.left + GetWidth();
     rc.bottom = rc_main.bottom;

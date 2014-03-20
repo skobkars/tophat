@@ -27,6 +27,7 @@ Copyright_License {
 #include "Form/Button.hpp"
 #include "Look/ButtonLook.hpp"
 #include "Look/DialogLook.hpp"
+#include "InfoBoxes/InfoBoxSettings.hpp"
 
 #include <tchar.h>
 
@@ -118,6 +119,22 @@ public:
   {
     return *dialog_look.caption.font;
   }
+
+  class Screens
+  {
+  public:
+    /**
+     * position of screens button based on infobox layout
+     */
+    enum ButtonPosition {
+      Bottom,
+      Left,
+      Right,
+    };
+
+    static ButtonPosition
+    GetButtonPosition(InfoBoxSettings::Geometry geometry, bool landscape);
+  };
 };
 
 
