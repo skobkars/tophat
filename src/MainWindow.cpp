@@ -413,6 +413,7 @@ MainWindow::ReinitialiseLayout()
 #else
   map->SetMainMenuButtonRect();
   map->SetZoomButtonsRect();
+  map->SetScreensButtonRect(ui_settings.info_boxes);
 #endif
   if (!HasDraggableScreen())
     map->SetTaskNavSliderShape();
@@ -728,6 +729,7 @@ MainWindow::OnTimer(WindowTimer &_timer)
 #if !defined(ENABLE_OPENGL) & !defined(KOBO)
     map->SetMainMenuButtonRect();
     map->SetZoomButtonsRect();
+    map->SetScreensButtonRect(CommonInterface::GetUISettings().info_boxes);
 #endif
   if (!HasDraggableScreen())
     map->SetTaskNavSliderShape();
@@ -862,6 +864,7 @@ MainWindow::SetFullScreen(bool _full_screen)
 #if !defined(ENABLE_OPENGL) & !defined(KOBO)
   map->SetMainMenuButtonRect();
   map->SetZoomButtonsRect();
+  map->SetScreensButtonRect(CommonInterface::GetUISettings().info_boxes);
 #endif
   if (!HasDraggableScreen())
     map->SetTaskNavSliderShape();
@@ -954,6 +957,7 @@ MainWindow::ActivateMap()
 #if !defined(ENABLE_OPENGL) & !defined(KOBO)
   map->SetMainMenuButtonRect();
   map->SetZoomButtonsRect();
+  map->SetScreensButtonRect(CommonInterface::GetUISettings().info_boxes);
 #endif
   if (!HasDraggableScreen())
     map->SetTaskNavSliderShape();

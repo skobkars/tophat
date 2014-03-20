@@ -36,6 +36,7 @@ Copyright_License {
 #include "Event/Idle.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Menu/TophatMenu.hpp"
+#include "UISettings.hpp"
 
 #ifdef ENABLE_SDL
 #include <SDL_keyboard.h>
@@ -440,6 +441,13 @@ GlueMapWindow::OnPaintBuffer(Canvas &canvas)
     DrawPanInfo(canvas);
 
 #if !defined(ENABLE_OPENGL) & !defined(KOBO)
+  bool is_main_window_widget = true, is_panning = false;
+  if (is_main_window_widget || (!is_panning &&
+      CommonInterface::GetUISettings().screens_button_location ==
+          UISettings::ScreensButtonLocation::MAP &&
+          CommonInterface::SetUISettings().pages.n_pages > 1))
+    DrawScreensButtonOverlay(canvas);
+
   if (!IsPanning())
     DrawMainMenuButtonOverlay(canvas);
   DrawZoomButtonOverlays(canvas);
@@ -532,6 +540,12 @@ GlueMapWindow::ButtonOverlaysOnMouseDown(PixelScalar x, PixelScalar y)
     InputEvents::HideMenu();
     return true;
   }
+  if (rc_screens_button.IsInside(p)) {
+    InputEvents::HideMenu();
+    InputEvents::eventScreenModes(_T("next"));
+    return true;
+  }
+
   if (!HasDraggableScreen() && slider_shape.GetInnerRect().IsInside(p)) {
     StaticString<20> menu_ordered(_T("NavOrdered"));
     StaticString<20> menu_goto(_T("NavGoto"));

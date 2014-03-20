@@ -57,6 +57,7 @@ Copyright_License {
 #include "GlideSolvers/GlideState.hpp"
 #ifndef ENABLE_OPENGL
 #include "Engine/Task/Factory/TaskFactoryType.hpp"
+#include "InfoBoxes/InfoBoxSettings.hpp"
 #endif
 
 #include <stdio.h>
@@ -126,6 +127,27 @@ GlueMapWindow::DrawMainMenuButtonOverlay(Canvas &canvas) const
   const int offsety = (menu_button_height - bitmap_size.cy) / 2;
   canvas.CopyAnd(rc_main_menu_button.left + offsetx,
                  rc_main_menu_button.top + offsety,
+                  bitmap_size.cx / 2,
+                  bitmap_size.cy,
+                  *bmp,
+                  bitmap_size.cx / 2, 0);
+}
+
+void
+GlueMapWindow::DrawScreensButtonOverlay(Canvas &canvas) const
+{
+  const IconLook &icons = UIGlobals::GetIconLook();
+  const Bitmap *bmp = &icons.hBmpMenuButton;
+  const PixelSize bitmap_size = bmp->GetSize();
+
+  UPixelScalar pen_width = !HasColors() ? 2 : 1;
+  canvas.Select(Pen((UPixelScalar)Layout::Scale(pen_width), COLOR_BLACK));
+  DrawRect(canvas, rc_screens_button);
+
+  const int offsetx = (rc_screens_button.GetSize().cx - bitmap_size.cx / 2) / 2;
+  const int offsety = (rc_screens_button.GetSize().cy - bitmap_size.cy) / 2;
+  canvas.CopyAnd(rc_screens_button.left + offsetx,
+                 rc_screens_button.top + offsety,
                   bitmap_size.cx / 2,
                   bitmap_size.cy,
                   *bmp,
@@ -645,7 +667,7 @@ GlueMapWindow::SetMainMenuButtonRect()
   PixelSize menu_button_size;
 
   menu_button_size.cx = MapOverlayButton::GetStandardButtonHeight()
-      * MapOverlayButton::GetScale() + MapOverlayButton::GetClearBorderWidth();
+      * MapOverlayButton::GetScale();
   menu_button_size.cy = menu_button_size.cx;
 
   UPixelScalar pen_width = Layout::Scale(2);
@@ -654,6 +676,47 @@ GlueMapWindow::SetMainMenuButtonRect()
   rc_main_menu_button.top -= pen_width;
   rc_main_menu_button.left = rc_main_menu_button.right -  menu_button_size.cx;
   rc_main_menu_button.top = rc_main_menu_button.bottom -  menu_button_size.cy;
+}
+
+void
+GlueMapWindow::SetScreensButtonRect(const InfoBoxSettings &infobox_settings)
+{
+  const PixelRect rc_main = GetClientRect();
+
+  MapOverlayButton::Screens::ButtonPosition button_position =
+      MapOverlayButton::Screens::GetButtonPosition(
+          infobox_settings.geometry, Layout::landscape);
+
+  PixelSize screens_button_size;
+  screens_button_size.cx = screens_button_size.cy =
+      MapOverlayButton::GetStandardButtonHeight()
+      * MapOverlayButton::GetScale();
+
+  PixelRect rc;
+  switch (button_position) {
+  case  MapOverlayButton::Screens::ButtonPosition::Left:
+    rc.left = 0;
+    rc.right = rc.left + screens_button_size.cx;
+    rc.bottom = rc_main.GetCenter().y;
+    rc.top = rc.bottom - screens_button_size.cy;
+  break;
+
+  case  MapOverlayButton::Screens::ButtonPosition::Right:
+    rc.right = rc_main.right;
+    rc.left = rc.right - screens_button_size.cx;
+    rc.bottom = rc_main.GetCenter().y;
+    rc.top = rc.bottom - screens_button_size.cy;
+  break;
+
+  case  MapOverlayButton::Screens::ButtonPosition::Bottom:
+    rc.left = rc_main.GetCenter().x - screens_button_size.cx / 2;
+    rc.right = rc.left + screens_button_size.cx;
+    rc.bottom = rc_main.bottom;
+    rc.top = rc.bottom - screens_button_size.cy;
+  break;
+  }
+
+  rc_screens_button = rc;
 }
 
 void

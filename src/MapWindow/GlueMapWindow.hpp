@@ -41,6 +41,7 @@ Copyright_License {
 struct Look;
 struct GestureLook;
 class Logger;
+class InfoBoxSettings;
 
 class OffsetHistory
 {
@@ -275,6 +276,12 @@ private:
   void DrawMainMenuButtonOverlay(Canvas &canvas) const;
 
   /**
+   * render transparent Screens button on the screen with GDI
+   * Duplicates code in Widget that is used with OPENGL
+   */
+  void DrawScreensButtonOverlay(Canvas &canvas) const;
+
+  /**
    * render transparaent buttons for zoom in / out with GDI
    * Duplicates code in Widget that is used with OPENGL
    * Todo: remove duplicate code
@@ -327,6 +334,13 @@ public:
    * when drawing without OPENGL
    */
   virtual void SetMainMenuButtonRect();
+
+  /**
+   * resizes the rc_screens_button for the current screen layout
+   * when drawing without OPENGL
+   */
+  virtual void SetScreensButtonRect(const InfoBoxSettings &infobox_settings);
+
   /**
    * resizes the rc_zoom_in_button and rc_zoom_out_button for the current
    * screen layout when drawing without OPENGL
@@ -340,6 +354,8 @@ public:
   PixelRect rc_main_menu_button;
   PixelRect rc_zoom_out_button;
   PixelRect rc_zoom_in_button;
+  PixelRect rc_screens_button;
+
 #endif
 
   /**
