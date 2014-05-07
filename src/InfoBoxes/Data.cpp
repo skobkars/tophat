@@ -45,7 +45,7 @@ InfoBoxData::SetClickToConfigure()
   SetAllColors(0);
   SetValue(_T(""));
   SetValueUnit(Unit::UNDEFINED);
-  SetComment(_T("Click to configure"));
+  SetComment(_("Click to configure"));
 }
 
 void
