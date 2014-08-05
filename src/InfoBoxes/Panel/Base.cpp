@@ -36,6 +36,7 @@ Copyright_License {
 #include "Look/GlobalFonts.hpp"
 #include "Language/Language.hpp"
 #include "Screen/Layout.hpp"
+#include "Screen/Font.hpp"
 #include "InfoBoxes/InfoBoxManager.hpp"
 #include "InfoBoxes/Content/Factory.hpp"
 #include "MainWindow.hpp"
@@ -153,7 +154,7 @@ BaseAccessPanel::CalculateLayout(const PixelRect &rc)
 
   frame_rc = base_rc;
   frame_rc.right = setup_button_rc.left - 1;
-  frame_rc.bottom = setup_button_rc.bottom;
+  frame_rc.bottom = frame_rc.top + Fonts::infobox_small.TextSize(_T("W")).cy;
 
   content_rc = base_rc;
   content_rc.top += GetHeaderHeight();
