@@ -193,18 +193,6 @@ public:
   /* virtual methods from class ActionListener */
   virtual void OnAction(int id) override;
 
-  /**
-   * returns rectangle used by footer area
-   * (above buttons and widget)
-   */
-  PixelRect GetFooterRect();
-
-  /**
-   * returns rectangle not used by footer area
-   * (for the buttons and widget)
-   */
-  PixelRect GetNonFooterRect();
-
 private:
   void AutoSize();
 

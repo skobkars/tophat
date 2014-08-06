@@ -130,7 +130,7 @@ public:
       + Layout::Scale(6) + dialog_look.text_font->GetHeight();
     assert(item_height > 0);
 
-    const PixelRect rc_footer = GetFooterRect();
+    const PixelRect rc_footer = canvas.GetRect();
 
     // paint the caption at the top of the footer.
     PixelRect rc_caption;

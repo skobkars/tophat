@@ -63,7 +63,7 @@ WidgetDialog::Create(SingleWindow &parent,
   dialog_footer.Create(GetClientAreaWindow(), _listener, _footer_height);
   widget.Set(_widget);
   buttons.SetButtonPosition(button_position);
-  widget.Move(buttons.UpdateLayout(GetNonFooterRect()));
+  widget.Move(buttons.UpdateLayout());
 }
 
 void
@@ -95,7 +95,7 @@ WidgetDialog::CreatePopup(SingleWindow &parent, const TCHAR *caption,
   WndForm::Create(parent, caption, GetDialogStyle());
   dialog_footer.Create(GetClientAreaWindow(), nullptr, 0);
   widget.Set(_widget);
-  widget.Move(buttons.UpdateLayout(GetNonFooterRect()));
+  widget.Move(buttons.UpdateLayout());
 }
 
 void
@@ -123,7 +123,7 @@ WidgetDialog::FinishPreliminary(Widget *_widget)
   assert(_widget != nullptr);
 
   widget.Set(_widget);
-  widget.Move(buttons.UpdateLayout(GetNonFooterRect()));
+  widget.Move(buttons.UpdateLayout());
 
   if (auto_size)
     AutoSize();
@@ -217,7 +217,7 @@ WidgetDialog::ShowModal()
   if (auto_size)
     AutoSize();
   else
-    widget.Move(buttons.UpdateLayout(GetNonFooterRect()));
+    widget.Move(buttons.UpdateLayout());
 
   widget.Show();
   return WndForm::ShowModal();
@@ -242,28 +242,6 @@ WidgetDialog::OnDestroy()
   WndForm::OnDestroy();
 }
 
-PixelRect
-WidgetDialog::GetNonFooterRect()
-{
-  PixelRect rc;
-  rc.left = 0;
-  rc.right = GetWidth();
-  rc.top = 0;
-  rc.bottom = GetHeight() - dialog_footer.GetHeight() - WndForm::GetTitleHeight();
-  return rc;
-}
-
-PixelRect
-WidgetDialog::GetFooterRect()
-{
-  PixelRect rc;
-  rc.left = 0;
-  rc.right = GetWidth();
-  rc.top = GetHeight() - dialog_footer.GetHeight() - WndForm::GetTitleHeight();
-  rc.bottom = GetHeight() - WndForm::GetTitleHeight();
-  return rc;
-}
-
 void
 WidgetDialog::OnResize(PixelSize new_size)
 {
@@ -272,10 +250,19 @@ WidgetDialog::OnResize(PixelSize new_size)
   if (auto_size)
     return;
 
-  widget.Move(buttons.UpdateLayout(GetNonFooterRect()));
+  // assumes top starts below title
+  PixelRect rc_widget = buttons.UpdateLayout();
+  rc_widget.bottom -= dialog_footer.GetHeight();
 
-  if (dialog_footer.IsDefined())
-    dialog_footer.Move(1, new_size.cy - dialog_footer.GetHeight() - WndForm::GetTitleHeight());
+  widget.Move(rc_widget);
+
+  if (dialog_footer.IsDefined()) {
+
+    PixelRect rc_footer { 0, rc_widget.bottom, rc_widget.right,
+      rc_widget.bottom + dialog_footer.GetHeight() };
+
+    dialog_footer.Move(rc_footer);
+  }
 }
 
 void
