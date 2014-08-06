@@ -122,10 +122,6 @@ public:
     /* footer_caption is painted at the top of the footer */
     PixelScalar caption_height = dialog_look.caption.font->GetHeight();
 
-    // in portrait, draw a spacer above the caption to separate it from the buttons
-    const PixelScalar portrait_spacer_height = !Layout::landscape
-        ? caption_height : 0u;
-
     PixelScalar item_height = dialog_look.list.font->GetHeight()
       + Layout::Scale(6) + dialog_look.text_font->GetHeight();
     assert(item_height > 0);
@@ -135,14 +131,14 @@ public:
     // paint the caption at the top of the footer.
     PixelRect rc_caption;
     rc_caption.left = 0;
-    rc_caption.top = portrait_spacer_height;
+    rc_caption.top = 0;
     rc_caption.right = rc_footer.right - rc_footer.left;
-    rc_caption.bottom = caption_height + portrait_spacer_height;
+    rc_caption.bottom = caption_height;
 
     if (!Layout::landscape) {
       canvas.Select(look.dialog.background_brush);
       canvas.SetBackgroundTransparent();
-      canvas.Rectangle(0, 0, rc_caption.right, portrait_spacer_height);
+      canvas.Rectangle(0, 0, rc_caption.right, 0);
     }
 
     canvas.Select(Brush(COLOR_XCSOAR_DARK));
@@ -155,7 +151,7 @@ public:
 
     // paint the main footer information
     PixelRect footer_rect_inner = rc_footer;
-    footer_rect_inner.top = caption_height + portrait_spacer_height;
+    footer_rect_inner.top = caption_height;
 
     canvas.SelectWhiteBrush();
     canvas.Rectangle(footer_rect_inner.left, footer_rect_inner.top,
@@ -417,8 +413,6 @@ ShowMapItemListDialog(const MapItemList &list,
     + Layout::Scale(6) + dialog_look.text_font->GetHeight();
   assert(item_height > 0);
   UPixelScalar caption_height = dialog_look.caption.font->GetHeight();
-  UPixelScalar portrait_spacer_height = !Layout::landscape
-      ? caption_height : 0u;
 
   MapItemListWidget widget(list_list, dialog_look, look,
                            traffic_look, final_glide_look,
@@ -426,8 +420,7 @@ ShowMapItemListDialog(const MapItemList &list,
   MapItemListDialog dialog(dialog_look, settings, footer_list);
 
   dialog.CreateFull(UIGlobals::GetMainWindow(), _("Nearby items:"), &widget,
-                    item_height * footer_list.size() + caption_height
-                    + portrait_spacer_height);
+                    item_height * footer_list.size() + caption_height);
 
   widget.CreateButtons(dialog);
 
