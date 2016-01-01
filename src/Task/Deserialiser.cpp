@@ -43,6 +43,10 @@ Deserialise(GeoPoint &data, const ConstDataNode &node)
   node.GetAttribute(_T("latitude"), data.latitude);
 }
 
+/**
+ * @return pointer to newly allocated wp structure or nullptr if not possible
+ * Caller is responsible for destroying the object
+ */
 static Waypoint *
 DeserialiseWaypoint(const ConstDataNode &node, const Waypoints *waypoints)
 {
