@@ -181,8 +181,11 @@ ParseSET(NMEAInputLine &line, NMEAInfo &info) {
 bool
 ILECDevice::ParseNMEA(const char *_line, NMEAInfo &info)
 {
-  if (!VerifyNMEAChecksum(_line))
-    return false;
+//  RLD DEBUG
+//  if (!VerifyNMEAChecksum(_line))
+//    return false;
+
+
   NMEAInputLine line(_line);
   char type[16];
   line.Read(type, sizeof(type));
@@ -237,21 +240,30 @@ static struct SN10taskInfo_T { // Note: heights and sizes in meters
 
   /// Task settings from SN10
   struct SN10taskSettings_T {
-    enum TaskType_T { TASK_AREA, TASK_CLASSIC } task_type;
+    enum TaskType_T {
+      TASK_AREA,
+      TASK_CLASSIC,
+    } task_type;
+
+    enum PointType_T {
+      PT_NONE,
+      PT_CYLINDER,
+      PT_FAI,
+      PT_LINE, /*start-finish only*/
+    };
+
     int task_time_minutes; // PST time (area, USA MAT, OLC club, etc)
-    enum PointType_T { PT_NONE, PT_CYLINDER, PT_FAI, PT_LINE/*start-finish only*/ };
     PointType_T start_type;
     int start_radius; // line width, cylinder radius, in Meters
     int start_height; // Not implemented in SN10 v2.40; 0 indicates Do-Not-Use
-    /// Did SN10 send a start height?
-    bool StartHeightIsProvided() const { return start_height>0; }; // Note: start height is not yet provided as of SN10 2.41
+
     PointType_T finish_type;
     int finish_radius; // line width, cylinder radius, in Meters
     int finish_height_MSL; // set in SN10 via 'Fin'
     PointType_T turn_type; // FAI or cylinder, only used for racing tasks
     int turnpoint_radius; // relevant only for racing turns
     // Why BS said it was a mistake not to include default operator== in C++
-    bool operator==(const SN10taskSettings_T &b) const {
+    bool operator == (const SN10taskSettings_T &b) const {
       return task_type        == b.task_type           &&
           task_time_minutes   == b.task_time_minutes   &&
           start_type          == b.start_type          &&
@@ -264,7 +276,12 @@ static struct SN10taskInfo_T { // Note: heights and sizes in meters
           turnpoint_radius    == b.turnpoint_radius     ;
     }
     /// Translate NMEA input character to SN10 point type
-    static bool GetPointType(PointType_T &result, char F);
+    static bool GetPointType(PointType_T &result, char f);
+    // Did SN10 send a start height?
+    //tart height is not yet provided as of SN10 2.41
+    bool StartHeightIsProvided() const {
+      return start_height > 0;
+    };
   } task_settings;
 
   /// Task points from SN10
@@ -334,14 +351,13 @@ static struct SN10taskInfo_T { // Note: heights and sizes in meters
    * @param wp
    * @param SN10_pt_idx.  Type of SN10 task point type
    * @return a newly allocated oz object
-   *
    * caller is responsible for memory management
    */
   ObservationZonePoint *GetNewObservationZone(Waypoint pt, int SN10_pt_idx);
 
   void UpdateXCSoarTaskFromSN10();
 
-} SN10task;
+} SN10_task;
 
 typedef SN10taskInfo_T::SN10PointRecd_T::SN10pointDetail_T PTbase_T;
 
@@ -506,10 +522,15 @@ SN10taskInfo_T::UpdateXCSoarTaskFromSN10()
     // XCsoar doesn't use time limit for racing tasks, oh well...
     beh.aat_min_time = task_settings.task_time_minutes * 60; // seconds
   }
-  if (task_settings.StartHeightIsProvided()) { // start height is not yet provided as of SN10 2.41
-    beh.start_constraints.max_height = task_settings.start_height; // meters
+
+  // start height is not yet provided as of SN10 2.41
+  if (task_settings.StartHeightIsProvided()) {
+    beh.start_constraints.max_height = task_settings.start_height;
     beh.start_constraints.max_height_ref = AltitudeReference::MSL;
   }
+  beh.finish_constraints.min_height = task_settings.finish_height_MSL;
+  beh.finish_constraints.min_height_ref = AltitudeReference::MSL;
+
   new_task->SetOrderedTaskSettings(beh);
   bool new_task_constructed_ok = true;
 
@@ -532,12 +553,11 @@ SN10taskInfo_T::UpdateXCSoarTaskFromSN10()
     std::unique_ptr<Waypoint> wp(GetXCSoarWaypoint(SN10_pt_idx));
     ObservationZonePoint *oz = GetNewObservationZone(*wp, SN10_pt_idx);
     OrderedTaskPoint *otp = nullptr;
-    if (task_settings.task_type == SN10taskSettings_T::TASK_AREA) {
-      AATPoint *aat_p = fact.CreateAATPoint(oz, *wp);
-      otp = aat_p;
-    } else {
+    if (task_settings.task_type == SN10taskSettings_T::TASK_AREA)
+      otp = fact.CreateAATPoint(oz, *wp);
+    else
       otp = fact.CreateASTPoint(oz, *wp);
-    }
+
     new_task_constructed_ok &= fact.Append(*otp, false);
     delete otp;
   }
@@ -555,11 +575,8 @@ SN10taskInfo_T::UpdateXCSoarTaskFromSN10()
   for (int SN10_pt_idx=0; SN10_pt_idx<SN10_PT_CNT; SN10_pt_idx++)
     if (pts[SN10_pt_idx].ptbase.is_achieved)
       active_xcsoar_pt_idx++;
-  new_task->SetActiveTaskPoint(active_xcsoar_pt_idx); // This active point is clobbered in commit; reset after commit...
-  // Strange finalization required to get the task all filled in
   // Overwrites complex AAT shape if nationality US! So don't do this: fact.MutateTPsToTaskType();
   new_task->ScanStartFinish(); // set task internal pointers to optional start and finish points
-  // ??? task->OverrideStartTime()
   assert(new_task_constructed_ok);
   assert(new_task->CheckTask()); // Check if the newly constructed task is valid
 
@@ -576,6 +593,9 @@ SN10taskInfo_T::UpdateXCSoarTaskFromSN10()
   {
     ProtectedTaskManager::ExclusiveLease lease(*protected_task_manager);
     lease->Commit(*new_task);
+    LogDebug("SN10taskInfo_T::UpdateXCSoarTaskFromSN10() COMMITTED! optimizable:%u AAT:%u",
+             lease->GetOrderedTask().IsOptimizable(),
+             task_settings.task_type == SN10taskSettings_T::TASK_AREA);
     if (lease->GetOrderedTask().IsOptimizable() &&
         task_settings.task_type == SN10taskSettings_T::TASK_AREA)
     {
@@ -592,10 +612,10 @@ SN10taskInfo_T::UpdateXCSoarTaskFromSN10()
       }
     } // aat actual point update
     lease->SetActiveTaskPoint(active_xcsoar_pt_idx);
-  } // release lease on active new_Task
-
-  // ToDo DRN: update remaining task state info: start time
-  // ToDo DRN: maybe: XCSoar overwrites achieved AAT point position with its best-calculated point (bad during testing)
+    // ToDo DRN: update remaining task state info: start time
+    //const AircraftState default_state;
+    //lease->OverrideStartTime(default_state, 0);
+  }
 }
 
 /**
@@ -629,7 +649,9 @@ ParseTSK(NMEAInputLine &line)
   if (!line.ReadChecked(task_settings.start_radius))
     return false;
 
+  // RLD Do we want to set Tophat start height to zero if none is sent from the SN10?
   line.ReadChecked(task_settings.start_height);
+  LogDebug("Read Start_height:%i", task_settings.start_height);
 
   char finish_type_code = line.ReadOneChar(); // "NCFL"; // None, Cylinder, FAI, Line
   if (!SN10taskInfo_T::SN10taskSettings_T::GetPointType(
@@ -646,11 +668,11 @@ ParseTSK(NMEAInputLine &line)
   if (!line.ReadChecked(task_settings.turnpoint_radius))
     return false;
   // If task settings are new, build and set new XCSoar task...
-  if (SN10task.xcsoar_task_declared && task_settings == SN10task.task_settings)
+  if (SN10_task.xcsoar_task_declared && task_settings == SN10_task.task_settings)
     return true; // duplicate, nothing more to do
-  SN10task.task_settings_received = true;
-  SN10task.task_settings = task_settings;
-  SN10task.UpdateXCSoarTaskFromSN10();
+  SN10_task.task_settings_received = true;
+  SN10_task.task_settings = task_settings;
+  SN10_task.UpdateXCSoarTaskFromSN10();
   return true;
 }
 
@@ -663,10 +685,14 @@ static bool ParsePT(NMEAInputLine &line) {
   // - racing:       $PILC,PT,1,Fitchbr,4233.250,N,07145.533,W,N,*2B
   // - simple area:  $PILC,PT,3,Orange ,4234.200,N,07217.317,W,N,,4234.200,N,07217.317,W,7500*7D
   // - complex area: $PILC,PT,2,Lebanon,4337.567,N,07218.250,W,N,,4334.867,N,07218.250,W,35000,5000,135,225*38
-  int PT_number; // ordinal, not index...
-  if (!line.ReadChecked(PT_number))
+  int pt_number; // ordinal, not index...
+  if (!line.ReadChecked(pt_number)) {
+    LogFormat("ParsePT ENTER / exit bad number");
     return false;
-  if (PT_number < 1 || PT_number > SN10_PT_CNT)
+  }
+  LogFormat("ParsePT ENTER #%i", pt_number);
+
+  if (pt_number < 1 || pt_number > SN10_PT_CNT)
     return false;
   if (!line.IsEmpty()) {
     pt.is_non_nil_point = true;
@@ -688,12 +714,12 @@ static bool ParsePT(NMEAInputLine &line) {
     };
   };
   // Have we already received this point info?
-  SN10task.pts[PT_number - 1].point_received = true; // prior check below for case of received nil point
-  if (pt == SN10task.pts[PT_number - 1].ptbase)
+  SN10_task.pts[pt_number - 1].point_received = true; // prior check below for case of received nil point
+  if (pt == SN10_task.pts[pt_number - 1].ptbase)
     return true; // parse succeeded, but nothing more to do (already received and processed this point)
   // This is new/changed, so reset task
-  SN10task.pts[PT_number - 1].ptbase = pt;
-  SN10task.UpdateXCSoarTaskFromSN10();
+  SN10_task.pts[pt_number - 1].ptbase = pt;
+  SN10_task.UpdateXCSoarTaskFromSN10();
   return true;
 }
 
@@ -744,15 +770,16 @@ static const char * const NMEAsim[] = {
   "$PILC,PDA1,0,0.00*70",
   "$PILC,POLAR,-0.0015302,0.078267,-1.68293,1.0001*74",
   "$PILC,SET,1013.2*4B",
-  "$PILC,TSK,R,301,C,3000,,L,4000,607,F,500,*70",
+  "$PILC,TSK,R,301,C,3100,,L,4100,601,F,501,*70",
+  "pause: Racing. start radius:3100, start height:blank, finish line radius:4100 height: 601. TP Radius 501?",
   "",
   "! Initial AAT setup",
   "! Task: Area, 301 minutes, Cylinder start 3000 radius, unknown start height, Line finish, 4000 meter radius, 607 finish height, FAI turn, 500 radius",
-  "$PILC,TSK,A,301,C,3000,,L,4000,607,F,500,*63",
-  "pause: Did switch from racing to AAT before the points were updated cause something bad?",
+  "$PILC,TSK,A,302,C,3200,,L,4200,602,F,502,*63",
+  "pause: AAT task time:302, start radius:3200, start height:blank, finish line radius:4200 height: 602. TP Radius 502?",
   "",
   "$PILC,PT,1,TEST   ,4406.967,N,07250.000,W,N,*50",
-  "! Spurious repeat of start point PT#1 ?",
+  "pause: Spurious repeat of start point PT#1 ?",
   "$PILC,PT,1,TEST   ,4406.967,N,07250.000,W,N,*50",
   "$PILC,PT,2*20",
   "$PILC,PT,3,2Morris,4432.183,N,07236.633,W,N,,4432.183,N,07236.633,W,5000*60",
@@ -762,12 +789,23 @@ static const char * const NMEAsim[] = {
   "",
   "! Dragging the target points with areas generates the following updates:",
   "$PILC,PT,3,2Morris,4432.183,N,07236.633,W,N,,4432.183,N,07237.372,W,5000*61",
+  "pause: drag 2Morris",
   "$PILC,PT,3,2Morris,4432.183,N,07236.633,W,N,,4432.183,N,07238.111,W,5000*69",
+  "pause: drag 2Morris",
   "$PILC,PT,5,1Montpe,4412.233,N,07233.500,W,N,,4412.328,N,07230.497,W,35000,4000,45,130*5F",
+  "pause: drag 1Montpe",
   "$PILC,PT,3,2Morris,4432.183,N,07236.633,W,N,,4433.767,N,07238.111,W,5000*64",
+  "pause: drag 2Morris",
   "$PILC,PT,5,1Montpe,4412.233,N,07233.500,W,N,,4412.328,N,07230.497,W,35000,4000,45,130*5F",
+  "pause: drag 1Montpe",
   "$PILC,PT,5,1Montpe,4412.233,N,07233.500,W,N,,4412.328,N,07215.720,W,35000,4000,45,130*57",
+  "pause: drag 1Montpe",
   "$PILC,PT,12,TEST   ,4406.967,N,07250.000,W,N,*62",
+  "pause: repeated finish?",
+
+  "$PILC,PT,12,TEST1   ,4426.967,N,07250.000,W,N,*62",
+  "pause: Moved Finish north",
+
   "pause: dragged points in expected locations (and not clobbered by XCSoar optimization)?",
   "",
   "! Start task, then mark TP#1 achieved",
@@ -828,10 +866,10 @@ static void Simulate_SN10_NMEA_sequence() {
     const char* pTxt = NMEAsim[line_idx];
     if (pTxt == 0) return; // no more interesting lines
     line_idx++;
-    if (memcmp(pTxt, "pause", 5) == 0) {
-      LogFormat("%s", pTxt);
+    LogFormat("%s", pTxt);
+    if (memcmp(pTxt, "pause", 5) == 0)
       return; // end of sequence to simulate
-    }
+
     dummyILECdevice->ParseNMEA(pTxt, dummyNMEAinfo);
   };
 }
