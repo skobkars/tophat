@@ -1110,6 +1110,13 @@ location=18
 
 mode=Menu
 type=key
+data=7
+event=DRNtestHook
+label=ILEC SET TASK
+location=19
+
+mode=Menu
+type=key
 data=0
 event=TerrainTopography terrain toggle
 event=Mode default

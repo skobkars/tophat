@@ -48,6 +48,8 @@ namespace InputEvents
   void HideMenu();
   Menu *GetMenu(const TCHAR *mode);
 
+  void eventDRNtestHook(gcc_unused const TCHAR *misc); //debug
+
   /**
    * Load the default input file (Data/Input/default.xci).
    */
