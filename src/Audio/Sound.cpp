@@ -75,11 +75,16 @@ PlayResource(const TCHAR *resource_name)
   strncat(raw_file_name, _T(resource_name), sizeof(raw_file_name));
   strncat(raw_file_name, ".raw", sizeof(raw_file_name));
 
-  RawPlayback *raw_playback = new RawPlayback();
-  int ret = raw_playback->playback_file(raw_file_name);
-  delete raw_playback;
-  if (ret < 0)
+  const pid_t pid = fork();
+  if (gcc_unlikely(pid < 0))
     return false;
+
+  if (pid == 0) {
+      RawPlayback *raw_playback = new RawPlayback();
+      raw_playback->playback_file(raw_file_name);
+      delete raw_playback;
+      _exit(0);
+  }
   return true;
 #endif
 }
