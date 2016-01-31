@@ -47,7 +47,7 @@ const char *wav_str = "WAV_";
 #endif
 
 bool
-PlayResource(const TCHAR *resource_name)
+PlayResource(const TCHAR *resource_name, bool asynchronous)
 {
 #ifdef ANDROID
 
@@ -79,16 +79,23 @@ PlayResource(const TCHAR *resource_name)
   raw_file_name.append(lower_resource_name.c_str());
   raw_file_name.append(".raw");
 
-  const pid_t pid = fork();
-  if (gcc_unlikely(pid < 0))
-    return false;
+  bool ret_val = true;
+  if (asynchronous) {
+    const pid_t pid = fork();
+    if (gcc_unlikely(pid < 0))
+      return false;
 
-  if (pid == 0) {
+    if (pid == 0) {
       RawPlayback *raw_playback = new RawPlayback();
       raw_playback->playback_file(raw_file_name);
       delete raw_playback;
       _exit(0);
+    }
+  } else {
+    RawPlayback *raw_playback = new RawPlayback();
+    ret_val = raw_playback->playback_file(raw_file_name);
+    delete raw_playback;
   }
-  return true;
+  return ret_val;
 #endif
 }

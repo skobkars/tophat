@@ -26,10 +26,11 @@ package org.tophat;
 import java.util.HashMap;
 import android.media.MediaPlayer;
 import android.content.Context;
+import android.util.Log; /* debug */
 
 public class SoundUtil {
   private static HashMap<String, Integer> resources = new HashMap();
-
+  private static final String TAG = "TopHat";
   static {
     resources.put("IDR_FAIL", R.raw.fail);
     resources.put("IDR_INSERT", R.raw.insert);

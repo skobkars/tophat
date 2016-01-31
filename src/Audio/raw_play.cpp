@@ -37,11 +37,19 @@ RawPlayback::playback_chunk(short *buff, int count)
 
   /* Interleaved mode */
   rc = snd_pcm_hw_params_set_access(handle, params,
-                      SND_PCM_ACCESS_RW_INTERLEAVED);
+                                    SND_PCM_ACCESS_RW_INTERLEAVED);
   if (rc < 0) {
     rc = -4;
+    LogFormat("set_access failed: %s", snd_strerror(rc));
     goto _return;
   }
+
+/*  rc = snd_pcm_hw_params_set_rate_resample(handle, params, (int)0);
+  if (rc < 0) {
+    rc = -4;
+    LogFormat("set_rate_resample failed: %s", snd_strerror(rc));
+    goto _return;
+  }*/
 
   /* Signed 16-bit little-endian format */
   rc = snd_pcm_hw_params_set_format(handle, params,
@@ -59,6 +67,7 @@ RawPlayback::playback_chunk(short *buff, int count)
   }
 
   val = PLAYBACK_RATE;
+  /*  @param val. approximate target rate / returned approximate set rate */
   rc = snd_pcm_hw_params_set_rate_near(handle, params,
                                   &val, &dir);
   if (rc < 0) {
@@ -118,12 +127,12 @@ RawPlayback::playback_chunk(short *buff, int count)
       p += rc;
       count -= rc;
       if (rc != len)
-	LogFormat("short write, write %d frames\n", rc);
+        LogFormat("short write, write %d frames\n", rc);
     }
   }
 
   snd_pcm_drain(handle);
- _return:
+  _return:
   return rc;
 }
 

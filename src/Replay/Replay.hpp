@@ -86,7 +86,7 @@ class Replay final
 
 public:
   Replay(Logger *_logger, ProtectedTaskManager &_task_manager)
-    :time_scale(fixed(1)), replay(nullptr),
+    :time_scale(fixed(3)), replay(nullptr),
      logger(_logger), task_manager(_task_manager), cli(nullptr) {
     path[0] = _T('\0');
   }

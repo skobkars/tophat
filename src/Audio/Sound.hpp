@@ -26,6 +26,6 @@ Copyright_License {
 
 #include <tchar.h>
 
-bool PlayResource(const TCHAR *resource_name);
+bool PlayResource(const TCHAR *resource_name, bool asynchronous = true);
 
 #endif
