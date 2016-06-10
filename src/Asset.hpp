@@ -360,7 +360,7 @@ HasCursorKeys()
 #ifdef ANDROID
   return has_cursor_keys;
 #else
-  return !IsKobo() && !IsIOS();
+  return !IsIOS();
 #endif
 }
 
