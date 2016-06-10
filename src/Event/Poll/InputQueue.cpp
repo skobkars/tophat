@@ -31,8 +31,6 @@ InputEventQueue::InputEventQueue(IOLoop &io_loop, EventQueue &queue)
    libinput_handler(io_loop, queue)
 #else /* !USE_LIBINPUT */
 #ifdef KOBO
-   /* keyboard(io_loop, queue, merge_mouse),
-   mouse(io_loop, queue, merge_mouse) */
    all_input(io_loop, queue, merge_mouse)
 #elif defined(USE_LINUX_INPUT)
    all_input(io_loop, queue, merge_mouse)
@@ -46,11 +44,6 @@ InputEventQueue::InputEventQueue(IOLoop &io_loop, EventQueue &queue)
   libinput_handler.Open();
 #else /* !USE_LIBINPUT */
 #ifdef KOBO
-  /* power button */
-  //keyboard.Open("/dev/input/event0");
-
-  /* Kobo touch screen */
-  //mouse.Open("/dev/input/event1");
   all_input.Open();
 #elif defined(USE_LINUX_INPUT)
   all_input.Open();
