@@ -29,7 +29,6 @@ Copyright_License {
 #else
 #include "Linux/MergeMouse.hpp"
 #ifdef KOBO
-//#include "Linux/Input.hpp"
 #include "Linux/AllInput.hpp"
 #elif defined(USE_LINUX_INPUT)
 #include "Linux/AllInput.hpp"
@@ -54,8 +53,6 @@ class InputEventQueue final {
 #else /* !USE_LIBINPUT */
   MergeMouse merge_mouse;
 #ifdef KOBO
-  /*LinuxInputDevice keyboard;
-  LinuxInputDevice mouse;*/
   AllLinuxInputDevices all_input;
 #elif defined(USE_LINUX_INPUT)
   AllLinuxInputDevices all_input;
